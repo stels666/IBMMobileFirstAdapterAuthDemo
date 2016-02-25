@@ -5,6 +5,12 @@
 	angular.module('app').factory('LocalUserService', ['$q', LocalUserService]);
 	angular.module('app').factory('Authenticator', ['ChallengeHandler', 'LocalUserService', '$q', Authenticator]);
 	
+	var USER_LOGIN_IS_EMPTY_ERROR = 1;
+	var USER_PASSWORD_IS_EMPTY_ERROR = 2;
+	var INVALID_USER = 3;
+	var USER_IS_NOT_AUTHRNTICATED = 4;
+	var INVALID_TICKET = 5;
+	
 	/**
 	 * online, local user exists and authenticated on server
 	 */
@@ -87,9 +93,26 @@
 			case TYPE_ONLINE_BOTH_AUTH:
 				WL.Logger.warn('Authenticator.onAccessDenied: TYPE_ONLINE_BOTH_AUTH');
 				break;
+				
 			case TYPE_ONLINE_LOCAL:
-				WL.Logger.warn('Authenticator.onAccessDenied: TYPE_ONLINE_BOTH_AUTH');
+				WL.Logger.warn('Authenticator.onAccessDenied: TYPE_ONLINE_LOCAL');
+				if(error != null && error.code == INVALID_TICKET) {
+					WL.Logger.error('Authenticator.onAccessDenied: INVALID_TICKET');
+					ChallengeHandler.logout({
+						onSuccess : function() {
+							LocalUserService.get().then(function(user){
+								ChallengeHandler.login(user, TYPE_ONLINE_LOCAL);
+							}, function(error){
+								WL.Logger.error(error);
+							});
+						},
+						onFailure : function(error) {
+							WL.Logger.error(error);
+						}
+					});
+				}
 				break;
+				
 			case TYPE_ONLINE_AUTH_WAS_SERVER:
 				WL.Logger.warn('Authenticator.onAccessDenied: TYPE_ONLINE_AUTH_WAS_SERVER');
 				break;
@@ -226,12 +249,7 @@
 			}
 		}
 	}
-    
-	var USER_LOGIN_IS_EMPTY_ERROR = 1;
-	var USER_PASSWORD_IS_EMPTY_ERROR = 2;
-	var INVALID_USER = 3;
-	var USER_IS_NOT_AUTHRNTICATED = 4;
-	var INVALID_TICKET = 5;
+	
 	/**
 	 * Errors:
 	 * USER_LOGIN_IS_EMPTY_ERROR = 1;

@@ -89,6 +89,15 @@ function onAuthRequired(headers, errorMessage, errorCode, isDataProcedure) {
     return loginFailure(errorCode, errorMessage, isDataProcedure);
 }
 
+function validateToken(token) {
+	var newTicket = com.auth.demo.Authenticator.checkCredentials(null, null, ticket);
+	if(newTicket == null){
+		return onAuthRequired(null, "Invalid ticket.", INVALID_TICKET, true);
+	} else {
+		return loginSuccess(newTicket);
+	}
+}
+
 function onLogout() {
 	com.auth.demo.Authenticator.onLogout();
 }

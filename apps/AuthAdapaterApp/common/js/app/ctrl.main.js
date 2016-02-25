@@ -17,7 +17,7 @@
 				    procedure : 'getData',
 				    parameters : ['eeeeeeeee']
 				};
-			WL.Client.invokeProcedure(invocationData)
+			Extended.Client.invokeProcedure(invocationData)
 			.then(function(data){
 				vm.data = data;
 				$scope.$apply();
