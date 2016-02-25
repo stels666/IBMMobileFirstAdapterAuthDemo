@@ -1,0 +1,18 @@
+<div class="bar bar-header bar-positive">
+  <h1 class="title">Main</h1>
+</div>
+
+<ion-content class="has-header" style="padding: 10px;">
+	
+	<button ng-click="vm.callAdapter()" class="button button-positive">
+ 		Call Adapter
+	</button>
+	
+	<div>Data: {{ vm.data }}</div>
+	<div>Error: {{ vm.error }}</div>
+	
+	<button ng-click="vm.logout()" class="button button-positive">
+ 		Logout
+	</button>
+	
+</ion-content>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tns:loginConfiguration xmlns:tns="http://www.worklight.com/auth/config" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	 <staticResources>
+	 	<!-- ////////////////////////////// IBM Mobile First logic ////////////////////////////// -->
+		<resource id="subscribeServlet" securityTest="SubscribeServlet">
+			<urlPatterns>/subscribeSMS*;/receiveSMS*;/ussd*</urlPatterns>
+		</resource>
+		
+		<!-- ////////////////////////////// Application logic ////////////////////////////// -->
+	</staticResources> 
+
+	<securityTests>
+		<!-- ////////////////////////////// IBM Mobile First logic ////////////////////////////// -->
+       	<customSecurityTest name="SubscribeServlet">
+       		<test realm="SubscribeServlet" isInternalUserID="true"/>
+       	</customSecurityTest>  
+       	
+       	<!-- ////////////////////////////// Application logic ////////////////////////////// --> 
+       	<customSecurityTest name="AuthAdapter-securityTest">
+		    <test isInternalUserID="true" realm="AuthAdapterRealm"/>
+		</customSecurityTest>
+	</securityTests> 
+	
+	<realms>
+		<!-- ////////////////////////////// IBM Mobile First logic ////////////////////////////// -->
+		<realm name="SampleAppRealm" loginModule="StrongDummy">
+			<className>com.worklight.core.auth.ext.FormBasedAuthenticator</className>
+		</realm>
+		<realm name="SubscribeServlet" loginModule="rejectAll">
+			<className>com.worklight.core.auth.ext.HeaderAuthenticator</className>			
+		</realm>
+		
+		<!-- ////////////////////////////// Application logic ////////////////////////////// -->
+		<realm loginModule="AuthAdapterLoginModule" name="AuthAdapterRealm">
+		  <className>com.worklight.integration.auth.AdapterAuthenticator</className>
+		  <parameter name="login-function" value="AuthAdapter.onAuthRequired"/>
+		  <parameter name="logout-function" value="AuthAdapter.onLogout"/>
+		</realm>
+	</realms>
+
+	<loginModules>
+		<!-- ////////////////////////////// IBM Mobile First logic ////////////////////////////// -->
+		<loginModule name="StrongDummy">
+			<className>com.worklight.core.auth.ext.NonValidatingLoginModule</className>
+		</loginModule>
+		
+		<loginModule name="requireLogin">
+			<className>com.worklight.core.auth.ext.SingleIdentityLoginModule</className>
+		</loginModule>
+		
+		<loginModule name="rejectAll">
+			<className>com.worklight.core.auth.ext.RejectingLoginModule</className>
+		</loginModule>
+		
+		<!-- ////////////////////////////// Application logic ////////////////////////////// -->
+		<loginModule name="AuthAdapterLoginModule">
+		    <className>com.worklight.core.auth.ext.NonValidatingLoginModule</className>
+		</loginModule>
+		
+	</loginModules>
+
+</tns:loginConfiguration>
