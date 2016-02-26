@@ -89,7 +89,7 @@ function onAuthRequired(headers, errorMessage, errorCode, isDataProcedure) {
     return loginFailure(errorCode, errorMessage, isDataProcedure);
 }
 
-function validateToken(token) {
+function validateTicket(ticket) {
 	var newTicket = com.auth.demo.Authenticator.checkCredentials(null, null, ticket);
 	if(newTicket == null){
 		return onAuthRequired(null, "Invalid ticket.", INVALID_TICKET, true);

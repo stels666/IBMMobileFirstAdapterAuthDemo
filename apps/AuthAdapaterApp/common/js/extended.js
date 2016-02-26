@@ -6,37 +6,37 @@ Extended.Client = new _ExtendedClient;
 
 function _ExtendedClient() {
 	
-	var _validationInterceptor;
+	var _validationErrorInterceptor;
 	
-	this.setValidationInterceptor = function(validationInterceptor) {
-		if(typeof validationInterceptor === 'object') {
-			_validationInterceptor = validationInterceptor;
+	this.setValidationErrorInterceptor = function(validationErrorInterceptor) {
+		if(typeof validationErrorInterceptor === 'function') {
+			_validationErrorInterceptor = validationErrorInterceptor;
 		} else {
-			throw new Error('"validationInterceptor" must be object.');
+			throw new Error('"validationInterceptor" must be function which return promise.');
 		}
 	}
 	
-	this.validateToken = function(token) {
+	this.validateTicket = function(ticket) {
 		
-		var validationAdapter; //'AuthAdapter';
-		var validationProcedure; //'getData';
+		var validationAdapter = applicationOptions.validationAdapter;
+		var validationProcedure = applicationOptions.validationProcedure;
 		
-		if(typeof validationAdapter !== 'string') {
+		if(typeof validationAdapter !== 'string' || (typeof validationAdapter === 'string' && validationAdapter.length == 0)) {
 			return Promise.reject({ error : 'Undefined or uncorrect validation adapter.'})
 		}
 		
-		if(typeof validationProcedure !== 'string') {
+		if(typeof validationProcedure !== 'string' || (typeof validationProcedure === 'string' && validationProcedure.length == 0)) {
 			return Promise.reject({ error : 'Undefined or uncorrect validation procedure.'})
 		}
 		
-		if(typeof token !== 'string') {
-			return Promise.reject({ error : 'Undefined or uncorrect token.'})
+		if(typeof ticket !== 'string' || (typeof ticket === 'string' && ticket.length == 0)) {
+			return Promise.reject({ error : 'Undefined or uncorrect ticket.'})
 		}
 		
 		var validationInvocationData = {
 			    adapter : validationAdapter,
 			    procedure : validationProcedure,
-			    parameters : [token]
+			    parameters : [ticket]
 			};
 		
 		return WL.Client.invokeProcedure(validationInvocationData);
@@ -45,7 +45,7 @@ function _ExtendedClient() {
 	/**
 	 * see {WL.Client.invokeProcedure}</br>
 	 * New parameters:</br>
-	 * @param invocationData.token - token for validating
+	 * @param invocationData.ticket - token for validating
 	 * @param invocationData.forceInvocation - flag for force invocation main procedure,
 	 * if true main procedure will called without validating token, but if token is not valid, result will
 	 * not return, if false main procedure will called after validating token and if token is not
@@ -56,33 +56,42 @@ function _ExtendedClient() {
 		
 		invocationData.forceInvocation = invocationData.forceInvocation ? invocationData.forceInvocation : false;
 		
-		if(typeof validationInterceptor !== 'object' || invocationData.forceInvocation == true) {
+		if(typeof _validationErrorInterceptor !== 'function' || invocationData.forceInvocation == true) {
 			return WL.Client.invokeProcedure(invocationData, options, useSendInvoke);
 		} else {
 			return new Promise(function(resolve, reject) {
-				//first step validate token
-				self.validateToken(invocationData.token)
+				var procedureError;
+				
+				//first step validate ticket
+				self.validateTicket(invocationData.ticket)
 				.then(function(){
 					// if token is correct return wl invocation procedure promise
-					return WL.Client.invokeProcedure(invocationData, options, useSendInvoke);
+					WL.Client.invokeProcedure(invocationData, options, useSendInvoke)
+					.then(function(data){
+						resolve(data);
+					}, function(error) {
+						reject(error);
+					});
 				}, function(error){
 					// if token is not correct use validation interceptor
 					// this is interceptor must define and call after main procedure will call
-					return validationInterceptor()
-					.then(function(){
-						// if validation interceptor return call success
-						// try to call main procedure
-						return WL.Client.invokeProcedure(invocationData, options, useSendInvoke);
-					}, function(){
-						reject(error);
-					});
+					procedureError = error;
+					return _validationErrorInterceptor(invocationData);
 				})
 				
-				.then(function(data){
-					resolve(data);
-				}, function(error) {
-					reject(error);
-				});
+				.then(function(newInvocationData){
+					// if validation interceptor return call success
+					// try to call main procedure with edited invocationData
+					newInvocationData = newInvocationData ? newInvocationData : invocationData;
+					WL.Client.invokeProcedure(newInvocationData, options, useSendInvoke)
+					.then(function(data){
+						resolve(data);
+					}, function(error) {
+						reject(error);
+					});
+				}, function(){
+					reject(procedureError);
+				})
 			});
 		}
 	};

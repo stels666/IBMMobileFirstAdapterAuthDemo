@@ -15,6 +15,7 @@
 			var invocationData = {
 				    adapter : 'AuthAdapter',
 				    procedure : 'getData',
+				    ticket : 'eeeeeeeee',
 				    parameters : ['eeeeeeeee']
 				};
 			Extended.Client.invokeProcedure(invocationData)

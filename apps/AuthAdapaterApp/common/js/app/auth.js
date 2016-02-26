@@ -51,7 +51,34 @@
 	 */
 	var TYPE_UNKNOWN = 8;
 	
+	/**
+	 * online, local user exists and authenticated on server, but CAS ticket is invalid
+	 */
+	var TYPE_INVALID_TICKET = 9;
+	
 	function Authenticator(ChallengeHandler, LocalUserService, $q){
+		
+		function getValidationErrorInterceptor(){
+//			var defer = $q.defer();
+			return function(invocationData){
+//				if(error != null && error.code == INVALID_TICKET) {
+//				WL.Logger.error('Authenticator.onAccessDenied: INVALID_TICKET');
+//				ChallengeHandler.logout({
+//					onSuccess : function() {
+//						LocalUserService.get().then(function(user){
+//							ChallengeHandler.login(user, TYPE_ONLINE_LOCAL);
+//						}, function(error){
+//							WL.Logger.error(error);
+//						});
+//					},
+//					onFailure : function(error) {
+//						WL.Logger.error(error);
+//					}
+//				});
+//			}
+				return $q.reject();
+			}
+		}
 		
 		function onAccessAllowed(data, type, submitedUser) {
 			switch (type) {
@@ -96,23 +123,7 @@
 				
 			case TYPE_ONLINE_LOCAL:
 				WL.Logger.warn('Authenticator.onAccessDenied: TYPE_ONLINE_LOCAL');
-				if(error != null && error.code == INVALID_TICKET) {
-					WL.Logger.error('Authenticator.onAccessDenied: INVALID_TICKET');
-					ChallengeHandler.logout({
-						onSuccess : function() {
-							LocalUserService.get().then(function(user){
-								ChallengeHandler.login(user, TYPE_ONLINE_LOCAL);
-							}, function(error){
-								WL.Logger.error(error);
-							});
-						},
-						onFailure : function(error) {
-							WL.Logger.error(error);
-						}
-					});
-				}
 				break;
-				
 			case TYPE_ONLINE_AUTH_WAS_SERVER:
 				WL.Logger.warn('Authenticator.onAccessDenied: TYPE_ONLINE_AUTH_WAS_SERVER');
 				break;
@@ -127,6 +138,9 @@
 				break;
 			case TYPE_SUBMIT:
 				WL.Logger.warn('Authenticator.onAccessDenied: TYPE_SUBMIT');
+				break;
+			case TYPE_INVALID_TICKET:
+				WL.Logger.warn('Authenticator.onAccessDenied: TYPE_INVALID_TICKET');
 				break;
 			case TYPE_UNKNOWN:
 			default:
@@ -192,6 +206,9 @@
 		function init(onlineMode){
 			document.addEventListener(WL.Events.WORKLIGHT_IS_CONNECTED, connectDetected, false);
 			document.addEventListener(WL.Events.WORKLIGHT_IS_DISCONNECTED, disconnectDetected, false);
+			
+			Extended.Client.setValidationErrorInterceptor(getValidationErrorInterceptor());
+			
 			if(onlineMode) {
 				online();
 			} else {
@@ -234,6 +251,7 @@
 		}
 		
 		function logout(options){
+			//TODO remove user from local storage and check server auth
 			ChallengeHandler.logout(options);
 		}
 		
@@ -329,7 +347,7 @@
 								message : response.responseJSON.auth.errorMsg, 
 								fromChallengeRequest : false 
 							}, 
-							TYPE_ONLINE_LOCAL);
+							TYPE_INVALID_TICKET);
 					return false;
 				}
 				return true;

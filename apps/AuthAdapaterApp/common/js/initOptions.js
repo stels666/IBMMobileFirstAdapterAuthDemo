@@ -27,3 +27,9 @@ if (window.addEventListener) {
 } else if (window.attachEvent) {
 	window.attachEvent('onload',  function() { WL.Client.init(wlInitOptions); });
 }
+
+var applicationOptions = {
+	validationAdapter : 'AuthAdapter',
+	validationProcedure : 'validateTicket'
+}
+
