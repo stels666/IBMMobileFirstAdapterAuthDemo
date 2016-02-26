@@ -58,6 +58,8 @@
 	
 	function Authenticator(ChallengeHandler, LocalUserService, $q){
 		
+		var _options;
+		
 		function getValidationErrorInterceptor(){
 //			var defer = $q.defer();
 			return function(invocationData){
@@ -260,6 +262,7 @@
 		 * @param options.loginPageState
 		 */
 		return function(options) {
+			_options = options;
 			connectDetected();
 			return {
 				login : login,
